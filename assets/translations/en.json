@@ -1,0 +1,80 @@
+{
+  "app_name": "Ridin",
+  "login": {
+    "title": "Ridin Login",
+    "subtitle": "Real-time intelligent school bus tracking",
+    "email_or_phone": "Email or Phone Number",
+    "password": "Password",
+    "submit": "Sign In",
+    "logging_in": "Signing in...",
+    "invalid_credentials": "Invalid credentials"
+  },
+  "roles": {
+    "driver": "Driver Mode",
+    "parent": "Parent Mode",
+    "switch_mode": "Switch Mode"
+  },
+  "driver": {
+    "cockpit": "Driver Cockpit",
+    "no_trip": "No active or scheduled trip",
+    "start_trip": "Start Trip",
+    "end_trip": "End Trip",
+    "bus_plate": "Bus",
+    "next_stop": "Next Stop",
+    "call_parent": "Call Parent",
+    "mark_boarded": "Boarded",
+    "mark_absent": "Absent",
+    "mark_skipped": "Skip",
+    "broadcast_delay": "Report Delay",
+    "delay_minutes": "Delay minutes",
+    "delay_reason": "Reason (traffic, flat tire...)",
+    "safety_check_required": "Safety Inspection Required",
+    "safety_check_prompt": "Please walk to the rear of the bus to scan the QR code or verify that every seat is empty.",
+    "scan_rear_qr": "Scan Rear QR Code",
+    "checklist_verified": "Seat inspection confirmed",
+    "speeding_alert": "Slow down! 60 km/h limit in school zone."
+  },
+  "parent": {
+    "title": "Live Tracking",
+    "no_active_trip": "No bus currently running for your children.",
+    "driver_name": "Driver",
+    "speed": "Speed",
+    "bus_approaching": "The bus is approaching your stop!",
+    "bus_arrived": "The bus has arrived!",
+    "ack_ready": "We are ready!",
+    "ack_delay": "Wait 2 minutes please",
+    "ack_sent": "Driver notified",
+    "child_status": "Status",
+    "boarded": "On board",
+    "absent": "Absent",
+    "propose_stop": "Pin Home Stop",
+    "propose_stop_hint": "Select your home location on the map"
+  },
+  "common": {
+    "kmh": "km/h",
+    "meters": "meters",
+    "minutes": "min",
+    "logout": "Log Out",
+    "logout_confirm_title": "Log Out Confirmation",
+    "logout_confirm_message": "Are you sure you want to log out of your account?",
+    "cancel": "Cancel",
+    "profile": "User Profile",
+    "press_back_again_to_exit": "Press back again to exit",
+    "language": "Language",
+    "french": "Français",
+    "english": "English",
+    "arabic": "العربية"
+  },
+  "driver_join": {
+    "title": "Driver Onboarding",
+    "subtitle": "Activate your driver access with your school bus invite code",
+    "button_login_screen": "New Driver? Join with a bus code",
+    "invite_code": "Bus Invite Code (e.g. RIDIN16)",
+    "full_name": "Full Name",
+    "phone": "Phone Number (e.g. 0555...)",
+    "password": "Password",
+    "submit": "Activate Driver Account",
+    "back_to_login": "Already have an account? Log in",
+    "success": "Driver account activated successfully!"
+  }
+}
