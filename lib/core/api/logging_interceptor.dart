@@ -14,6 +14,19 @@ class LoggingInterceptor extends Interceptor {
     'fcm_token',
     'secret',
     'current_password',
+    'link_code',
+    'centrifugo_subscription_token',
+    'latitude',
+    'longitude',
+    'address_label',
+    'phone',
+    'email',
+    'child_name',
+    'first_name',
+    'last_name',
+    'planned_geometry',
+    'planned_road_path',
+    'traveled_path',
   };
 
   @override
@@ -28,49 +41,56 @@ class LoggingInterceptor extends Interceptor {
     final url = options.uri.toString();
     final method = options.method.toUpperCase();
 
-    debugPrint('┌─────────────────────────────────────────────────────────────');
+    debugPrint(
+      '┌─────────────────────────────────────────────────────────────',
+    );
     debugPrint('│ 🚀 HTTP REQUEST: [$method] $url');
 
     // Headers
     if (options.headers.isNotEmpty) {
-      final sanitizedHeaders = Map<String, dynamic>.from(options.headers).map(
-        (key, value) {
-          if (key.toLowerCase() == 'authorization' && value is String) {
-            final parts = value.split(' ');
-            return MapEntry(
-              key,
-              parts.length > 1 ? '${parts[0]} ***' : '***',
-            );
-          }
-          return MapEntry(key, value);
-        },
-      );
+      final sanitizedHeaders = Map<String, dynamic>.from(options.headers).map((
+        key,
+        value,
+      ) {
+        if (key.toLowerCase() == 'authorization' && value is String) {
+          final parts = value.split(' ');
+          return MapEntry(key, parts.length > 1 ? '${parts[0]} ***' : '***');
+        }
+        return MapEntry(key, value);
+      });
       debugPrint('│ Headers: $sanitizedHeaders');
     }
 
     // Query Parameters
     if (options.queryParameters.isNotEmpty) {
-      debugPrint('│ QueryParams: ${options.queryParameters}');
+      debugPrint('│ QueryParams: ${_sanitizeData(options.queryParameters)}');
     }
 
     // Body
     if (options.data != null) {
       final sanitized = _sanitizeData(options.data);
       try {
-        final prettyJson = const JsonEncoder.withIndent('  ').convert(sanitized);
+        final prettyJson = const JsonEncoder.withIndent(
+          '  ',
+        ).convert(sanitized);
         debugPrint('│ Body: $prettyJson');
       } catch (_) {
         debugPrint('│ Body: $sanitized');
       }
     }
 
-    debugPrint('└─────────────────────────────────────────────────────────────');
+    debugPrint(
+      '└─────────────────────────────────────────────────────────────',
+    );
 
     return handler.next(options);
   }
 
   @override
-  void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
+  void onResponse(
+    Response<dynamic> response,
+    ResponseInterceptorHandler handler,
+  ) {
     if (!kDebugMode) {
       return handler.next(response);
     }
@@ -82,17 +102,25 @@ class LoggingInterceptor extends Interceptor {
     final method = response.requestOptions.method.toUpperCase();
     final path = response.requestOptions.uri.path;
 
-    debugPrint('┌─────────────────────────────────────────────────────────────');
-    debugPrint('│ ✅ HTTP RESPONSE: [$method] $path | Status: $statusCode (${durationMs}ms)');
+    debugPrint(
+      '┌─────────────────────────────────────────────────────────────',
+    );
+    debugPrint(
+      '│ ✅ HTTP RESPONSE: [$method] $path | Status: $statusCode (${durationMs}ms)',
+    );
 
     if (response.data != null) {
       final sanitized = _sanitizeData(response.data);
       try {
-        final prettyJson = const JsonEncoder.withIndent('  ').convert(sanitized);
+        final prettyJson = const JsonEncoder.withIndent(
+          '  ',
+        ).convert(sanitized);
         final lines = prettyJson.split('\n');
         if (lines.length > 30) {
           final truncated = lines.take(30).join('\n');
-          debugPrint('│ Data: $truncated\n│ ... [truncated ${lines.length - 30} lines]');
+          debugPrint(
+            '│ Data: $truncated\n│ ... [truncated ${lines.length - 30} lines]',
+          );
         } else {
           debugPrint('│ Data: $prettyJson');
         }
@@ -101,7 +129,9 @@ class LoggingInterceptor extends Interceptor {
       }
     }
 
-    debugPrint('└─────────────────────────────────────────────────────────────');
+    debugPrint(
+      '└─────────────────────────────────────────────────────────────',
+    );
 
     return handler.next(response);
   }
@@ -119,22 +149,30 @@ class LoggingInterceptor extends Interceptor {
     final method = err.requestOptions.method.toUpperCase();
     final path = err.requestOptions.uri.path;
 
-    debugPrint('┌─────────────────────────────────────────────────────────────');
-    debugPrint('│ ❌ HTTP ERROR: [$method] $path | Status: $statusCode (${durationMs}ms)');
+    debugPrint(
+      '┌─────────────────────────────────────────────────────────────',
+    );
+    debugPrint(
+      '│ ❌ HTTP ERROR: [$method] $path | Status: $statusCode (${durationMs}ms)',
+    );
     debugPrint('│ Type: ${err.type}');
 
     if (err.response?.data != null) {
       try {
-        final prettyJson = const JsonEncoder.withIndent('  ').convert(err.response!.data);
+        final prettyJson = const JsonEncoder.withIndent(
+          '  ',
+        ).convert(_sanitizeData(err.response!.data));
         debugPrint('│ Response Error: $prettyJson');
       } catch (_) {
-        debugPrint('│ Response Error: ${err.response?.data}');
+        debugPrint('│ Response Error: ${_sanitizeData(err.response?.data)}');
       }
     } else {
       debugPrint('│ Message: ${err.message}');
     }
 
-    debugPrint('└─────────────────────────────────────────────────────────────');
+    debugPrint(
+      '└─────────────────────────────────────────────────────────────',
+    );
 
     return handler.next(err);
   }

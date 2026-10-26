@@ -26,13 +26,15 @@ class ApiException implements Exception {
       case DioExceptionType.receiveTimeout:
       case DioExceptionType.transformTimeout:
         return const ApiException(
-          message: 'Délai d\'attente dépassé. Veuillez vérifier votre connexion internet.',
+          message:
+              'Délai d\'attente dépassé. Veuillez vérifier votre connexion internet.',
           code: 'TIMEOUT',
         );
 
       case DioExceptionType.connectionError:
         return const ApiException(
-          message: 'Impossible de joindre le serveur Ridin. Vérifiez votre réseau ou le serveur.',
+          message:
+              'Impossible de joindre le serveur Ridin. Vérifiez votre réseau ou le serveur.',
           code: 'CONNECTION_ERROR',
         );
 
@@ -81,7 +83,9 @@ class ApiException implements Exception {
         final rawErrors = data['errors'] as Map<String, dynamic>;
         for (final entry in rawErrors.entries) {
           if (entry.value is List) {
-            final list = (entry.value as List).map((e) => e.toString()).toList();
+            final list = (entry.value as List)
+                .map((e) => e.toString())
+                .toList();
             errorsMap[entry.key] = list;
             if (firstError == null && list.isNotEmpty) {
               firstError = list.first;
@@ -93,7 +97,8 @@ class ApiException implements Exception {
         }
       }
 
-      final mainMessage = firstError ??
+      final mainMessage =
+          firstError ??
           (data['message'] as String?) ??
           'Les données saisies sont invalides.';
 
@@ -127,7 +132,9 @@ class ApiException implements Exception {
       return ApiException(
         message: msg,
         statusCode: 403,
-        code: 'FORBIDDEN',
+        code: data is Map
+            ? (data['error_code'] as String? ?? 'FORBIDDEN')
+            : 'FORBIDDEN',
         rawResponse: data,
       );
     }
@@ -157,7 +164,8 @@ class ApiException implements Exception {
     // Handle 500+ Internal Server Errors
     if (statusCode != null && statusCode >= 500) {
       return ApiException(
-        message: 'Erreur interne du serveur ($statusCode). Veuillez réessayer plus tard.',
+        message:
+            'Erreur interne du serveur ($statusCode). Veuillez réessayer plus tard.',
         statusCode: statusCode,
         code: 'SERVER_ERROR',
         rawResponse: data,

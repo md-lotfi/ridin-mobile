@@ -33,11 +33,7 @@ void main() async {
 
   runApp(
     EasyLocalization(
-      supportedLocales: const [
-        Locale('fr'),
-        Locale('en'),
-        Locale('ar'),
-      ],
+      supportedLocales: const [Locale('fr'), Locale('en'), Locale('ar')],
       path: 'assets/translations',
       fallbackLocale: const Locale('en'),
       startLocale: const Locale('fr'),
@@ -136,6 +132,7 @@ class _AppRootViewState extends State<AppRootView> {
           NotificationService().syncDeviceToken(widget.apiClient);
         } else if (state is Unauthenticated) {
           _tokenSynced = false;
+          Navigator.of(context).popUntil((route) => route.isFirst);
         }
       },
       builder: (context, state) {
@@ -148,10 +145,10 @@ class _AppRootViewState extends State<AppRootView> {
             _tokenSynced = true;
             NotificationService().syncDeviceToken(widget.apiClient);
           }
-          final role = (state.user['role'] as String?) ?? state.activeMode;
+          final role = state.activeMode;
           final mustChangePassword = state.user['must_change_password'] == true;
 
-          if (role == 'driver' && mustChangePassword) {
+          if (mustChangePassword) {
             return const ChangeTemporaryPasswordScreen();
           }
 
@@ -162,7 +159,8 @@ class _AppRootViewState extends State<AppRootView> {
 
               final now = DateTime.now();
               if (_lastBackPressTime == null ||
-                  now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+                  now.difference(_lastBackPressTime!) >
+                      const Duration(seconds: 2)) {
                 _lastBackPressTime = now;
                 ScaffoldMessenger.of(context).clearSnackBars();
                 ScaffoldMessenger.of(context).showSnackBar(

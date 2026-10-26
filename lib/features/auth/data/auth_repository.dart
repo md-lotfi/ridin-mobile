@@ -10,10 +10,9 @@ class AuthRepository {
   static const _androidOptions = AndroidOptions(resetOnError: true);
   final FlutterSecureStorage storage;
 
-  AuthRepository({
-    required this.apiClient,
-    FlutterSecureStorage? storage,
-  }) : storage = storage ?? const FlutterSecureStorage(aOptions: _androidOptions);
+  AuthRepository({required this.apiClient, FlutterSecureStorage? storage})
+    : storage =
+          storage ?? const FlutterSecureStorage(aOptions: _androidOptions);
 
   Future<String?> _safeRead(String key) async {
     try {
@@ -38,46 +37,37 @@ class AuthRepository {
     }
   }
 
-  Future<void> _safeDeleteAll() async {
-    try {
-      await storage.deleteAll();
-    } catch (_) {}
-  }
-
   Future<Map<String, dynamic>> login({
     required String login,
     required String password,
     String? fcmToken,
   }) async {
     try {
-      final previousUser = await getCurrentUser();
-      final previousUserId = previousUser?['id'];
-
-      final response = await apiClient.dio.post('/auth/login', data: {
-        'login': login,
-        'password': password,
-        'fcm_token': fcmToken,
-        'device_name': 'Ridin Flutter App',
-      });
+      await apiClient.endSession();
+      final generation = apiClient.sessionGeneration;
+      final response = await apiClient.dio.post(
+        '/auth/login',
+        data: {
+          'login': login,
+          'password': password,
+          'fcm_token': fcmToken,
+          'device_name': 'Ridin Flutter App',
+        },
+      );
 
       final data = response.data as Map<String, dynamic>;
       final token = data['token'] as String;
       final centrifugo = data['centrifugo'] as Map<String, dynamic>;
       final user = data['user'] as Map<String, dynamic>;
-      final newUserId = user['id'];
-
-      // Cross-Account Purge: Wipe local storage completely when switching accounts
-      if (previousUserId != null && previousUserId != newUserId) {
-        await _safeDeleteAll();
-      }
-
-      final role = user['role'] as String? ?? 'parent';
-      await _safeWrite(AppConstants.keyAuthToken, token);
-      await _safeWrite(AppConstants.keyUserData, jsonEncode(user));
-      await _safeWrite(AppConstants.keyActiveMode, role);
-      await _safeWrite(AppConstants.keyCentrifugoToken, centrifugo['token']);
-      await _safeWrite(AppConstants.keyCentrifugoWsUrl, centrifugo['ws_url']);
-
+      final role =
+          user['active_mode'] as String? ?? user['role'] as String? ?? 'parent';
+      await apiClient.persistSession(generation, () async {
+        await _safeWrite(AppConstants.keyAuthToken, token);
+        await _safeWrite(AppConstants.keyUserData, jsonEncode(user));
+        await _safeWrite(AppConstants.keyActiveMode, role);
+        await _safeWrite(AppConstants.keyCentrifugoToken, centrifugo['token']);
+        await _safeWrite(AppConstants.keyCentrifugoWsUrl, centrifugo['ws_url']);
+      }, activate: true);
       return data;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -91,17 +81,24 @@ class AuthRepository {
     required String newPassword,
     required String confirmPassword,
   }) async {
+    final generation = apiClient.sessionGeneration;
     try {
-      final response = await apiClient.dio.post('/auth/change-password', data: {
-        'current_password': currentPassword,
-        'password': newPassword,
-        'password_confirmation': confirmPassword,
-      });
+      final response = await apiClient.dio.post(
+        '/auth/change-password',
+        data: {
+          'current_password': currentPassword,
+          'password': newPassword,
+          'password_confirmation': confirmPassword,
+        },
+      );
 
       final data = response.data as Map<String, dynamic>;
       final user = data['user'] as Map<String, dynamic>?;
       if (user != null) {
-        await _safeWrite(AppConstants.keyUserData, jsonEncode(user));
+        await apiClient.persistSession(
+          generation,
+          () => _safeWrite(AppConstants.keyUserData, jsonEncode(user)),
+        );
       }
 
       return data;
@@ -120,26 +117,32 @@ class AuthRepository {
     String? fcmToken,
   }) async {
     try {
-      final response = await apiClient.dio.post('/auth/register-parent', data: {
-        'name': name,
-        'phone': phone,
-        'password': password,
-        if (email != null && email.isNotEmpty) 'email': email,
-        'fcm_token': fcmToken,
-        'device_name': 'Ridin Flutter App (Parent)',
-      });
+      await apiClient.endSession();
+      final generation = apiClient.sessionGeneration;
+      final response = await apiClient.dio.post(
+        '/auth/register-parent',
+        data: {
+          'name': name,
+          'phone': phone,
+          'password': password,
+          if (email != null && email.isNotEmpty) 'email': email,
+          'fcm_token': fcmToken,
+          'device_name': 'Ridin Flutter App (Parent)',
+        },
+      );
 
       final data = response.data as Map<String, dynamic>;
       final token = data['token'] as String;
       final centrifugo = data['centrifugo'] as Map<String, dynamic>;
       final user = data['user'] as Map<String, dynamic>;
 
-      await _safeWrite(AppConstants.keyAuthToken, token);
-      await _safeWrite(AppConstants.keyUserData, jsonEncode(user));
-      await _safeWrite(AppConstants.keyActiveMode, 'parent');
-      await _safeWrite(AppConstants.keyCentrifugoToken, centrifugo['token']);
-      await _safeWrite(AppConstants.keyCentrifugoWsUrl, centrifugo['ws_url']);
-
+      await apiClient.persistSession(generation, () async {
+        await _safeWrite(AppConstants.keyAuthToken, token);
+        await _safeWrite(AppConstants.keyUserData, jsonEncode(user));
+        await _safeWrite(AppConstants.keyActiveMode, 'parent');
+        await _safeWrite(AppConstants.keyCentrifugoToken, centrifugo['token']);
+        await _safeWrite(AppConstants.keyCentrifugoWsUrl, centrifugo['ws_url']);
+      }, activate: true);
       return data;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -149,10 +152,28 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
+    final token = await getAuthToken();
+    await apiClient.endSession();
     try {
-      await apiClient.dio.post('/auth/logout');
+      await apiClient.dio.post(
+        '/auth/logout',
+        options: Options(
+          headers: {if (token != null) 'Authorization': 'Bearer $token'},
+        ),
+      );
     } catch (_) {}
-    await _safeDeleteAll();
+  }
+
+  Future<Map<String, dynamic>?> refreshSession() async {
+    final generation = apiClient.sessionGeneration;
+    final response = await apiClient.dio.get('/auth/session');
+    final user = Map<String, dynamic>.from(response.data['user'] as Map);
+    user['allowed_modes'] = response.data['allowed_modes'];
+    await apiClient.persistSession(
+      generation,
+      () => _safeWrite(AppConstants.keyUserData, jsonEncode(user)),
+    );
+    return user;
   }
 
   Future<Map<String, dynamic>?> getCurrentUser() async {
@@ -182,9 +203,11 @@ class AuthRepository {
   }
 
   Future<void> setActiveMode(String mode) async {
-    await _safeWrite(AppConstants.keyActiveMode, mode);
-    try {
-      await apiClient.dio.post('/auth/switch-mode', data: {'mode': mode});
-    } catch (_) {}
+    final generation = apiClient.sessionGeneration;
+    await apiClient.dio.post('/auth/switch-mode', data: {'mode': mode});
+    await apiClient.persistSession(
+      generation,
+      () => _safeWrite(AppConstants.keyActiveMode, mode),
+    );
   }
 }

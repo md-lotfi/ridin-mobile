@@ -46,3 +46,10 @@ class ModeSwitchRequested extends AuthEvent {
 }
 
 class LogoutRequested extends AuthEvent {}
+
+class SessionExpired extends AuthEvent {
+  final int generation;
+  const SessionExpired(this.generation);
+  @override
+  List<Object?> get props => [generation];
+}

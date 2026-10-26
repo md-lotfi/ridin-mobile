@@ -96,6 +96,9 @@ class _DriverCockpitScreenState extends State<DriverCockpitScreen> {
           }
         },
         builder: (context, state) {
+          if (state is DriverCockpitRestricted) {
+            return Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(state.message, textAlign: TextAlign.center)));
+          }
           if (state is DriverCockpitLoading) {
             return const Center(child: CircularProgressIndicator());
           }

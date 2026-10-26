@@ -15,6 +15,7 @@ class _ChildrenManagementScreenState extends State<ChildrenManagementScreen> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _children = [];
   String? _error;
+  List<Map<String, dynamic>> _requests = [];
 
   @override
   void initState() {
@@ -31,12 +32,16 @@ class _ChildrenManagementScreenState extends State<ChildrenManagementScreen> {
     try {
       final apiClient = context.read<ApiClient>();
       final response = await apiClient.dio.get('/parent/children');
+      final requests = await apiClient.dio.get('/parent/requests');
+      if (!mounted) return;
+      _requests = (requests.data['requests'] as List? ?? []).map((item) => Map<String, dynamic>.from(item as Map)).toList();
       final raw = response.data['children'] as List<dynamic>? ?? [];
       setState(() {
         _children = raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = ApiException.fromError(e).message;
         _isLoading = false;
@@ -84,8 +89,8 @@ class _ChildrenManagementScreenState extends State<ChildrenManagementScreen> {
                           children: [
                             Icon(Icons.child_care_outlined, size: 72, color: Colors.grey.shade400),
                             const SizedBox(height: 16),
-                            const Text(
-                              'Aucun élève associé',
+                            Text(
+                              _requests.any((request) => request['status'] == 'pending') ? 'Demande en attente de validation par l’école' : _requests.isNotEmpty ? 'Accès non approuvé. Contactez l’école.' : 'Aucun élève associé',
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 8),

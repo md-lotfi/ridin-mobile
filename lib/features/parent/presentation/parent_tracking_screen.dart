@@ -275,6 +275,9 @@ class _ParentTrackingScreenState extends State<ParentTrackingScreen> {
           }
         },
         builder: (context, state) {
+          if (state is ParentTrackingRestricted) {
+            return Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(state.message, textAlign: TextAlign.center)));
+          }
           if (state is ParentTrackingLoading) {
             return const Center(child: CircularProgressIndicator());
           }

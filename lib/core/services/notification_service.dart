@@ -16,6 +16,11 @@ class NotificationService {
   static const String channelName = 'Alertes Trajet Ridin';
   static const String channelDescription = 'Notifications prioritaires pour les approches et montées de bus scolaire';
 
+  Future<void> clearSessionAlerts() async {
+    if (!_isInitialized) return;
+    await _notificationsPlugin.cancelAll();
+  }
+
   /// Initialize notifications plugin and create high-priority notification channel
   Future<void> initialize() async {
     if (_isInitialized) return;
